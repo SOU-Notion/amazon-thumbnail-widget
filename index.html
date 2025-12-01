@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazonサムネイル取得ウィジェット</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="widget-container">
+        <div class="widget-header">
+            <h2>📚 Amazonサムネイル取得</h2>
+            <p class="subtitle">本のタイトルを入力すると、Amazonのサムネイル画像URLを取得します</p>
+        </div>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <label for="book-title">本のタイトル</label>
+                <input 
+                    type="text" 
+                    id="book-title" 
+                    placeholder="例: Python実践入門"
+                    autocomplete="off"
+                >
+            </div>
+            
+            <div class="input-group">
+                <label for="book-isbn">ISBN（オプション）</label>
+                <input 
+                    type="text" 
+                    id="book-isbn" 
+                    placeholder="例: 9784798161916"
+                    autocomplete="off"
+                >
+            </div>
+            
+            <button id="search-btn" class="search-button">
+                <span class="btn-text">検索</span>
+                <span class="btn-loading" style="display: none;">検索中...</span>
+            </button>
+        </div>
+        
+        <div id="result-section" class="result-section" style="display: none;">
+            <div class="result-header">
+                <h3>結果</h3>
+                <button id="copy-btn" class="copy-button">URLをコピー</button>
+            </div>
+            
+            <div id="thumbnail-preview" class="thumbnail-preview">
+                <img id="thumbnail-img" src="" alt="サムネイル画像">
+            </div>
+            
+            <div class="url-display">
+                <label>画像URL:</label>
+                <div class="url-box">
+                    <input type="text" id="thumbnail-url" readonly>
+                </div>
+            </div>
+        </div>
+        
+        <div id="error-message" class="error-message" style="display: none;"></div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
+
