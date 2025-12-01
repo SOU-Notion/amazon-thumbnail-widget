@@ -3,8 +3,8 @@
 // バックエンドAPIのURL（デプロイ後はここを変更）
 // ローカル開発: 'http://localhost:5000/api/get-thumbnail'
 // クラウドデプロイ後: 'https://your-app-name.onrender.com/api/get-thumbnail'
-const API_ENDPOINT = 'http://localhost:5000/api/get-thumbnail';
-
+// ※ Render 本番環境では必ず /api/get-thumbnail まで含める
+const API_ENDPOINT = 'https://amazon-thumbnail-widget.onrender.com/api/get-thumbnail';
 // DOM要素
 const bookTitleInput = document.getElementById('book-title');
 const bookIsbnInput = document.getElementById('book-isbn');
