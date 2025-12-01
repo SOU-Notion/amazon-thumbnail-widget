@@ -57,6 +57,9 @@ class AmazonThumbnailFetcher:
     
     def search_amazon_by_title(self, title: str, max_results: int = 1) -> List[Dict[str, str]]:
         """タイトルでAmazonを検索して複数の結果を取得（書籍のみ）"""
+        # 例外が起きても必ず参照できるように、先に初期化しておく
+        results: List[Dict[str, str]] = []
+        
         try:
             search_url = f"{self.amazon_base_url}/s"
             params = {
@@ -173,7 +176,6 @@ class AmazonThumbnailFetcher:
             # 書籍以外の商品（Kindle、オーディオブックなど）を除外するための追加フィルタ
             # ただし、まずは書籍カテゴリで絞り込んでいるので、この段階では基本的に書籍のみのはず
             
-            results = []
             seen_asins = set()
             
             # BeautifulSoupで取得したデータを使用
