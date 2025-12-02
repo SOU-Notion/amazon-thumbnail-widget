@@ -203,10 +203,56 @@ class AmazonThumbnailFetcher:
                         # 商品URLを構築
                         product_url = f"{self.amazon_base_url}/dp/{asin}"
                         
+                        # 検索結果ページから直接画像URLを抽出
+                        thumbnail_url = None
+                        
+                        # 方法1: imgタグを探す（複数のパターンを試す）
+                        img_tag = None
+                        # パターン1: s-imageクラスを持つimgタグ
+                        img_tag = result.find('img', class_=lambda x: x and 's-image' in str(x))
+                        # パターン2: data-image-latency属性を持つimgタグ
+                        if not img_tag:
+                            img_tag = result.find('img', {'data-image-latency': True})
+                        # パターン3: 任意のimgタグ
+                        if not img_tag:
+                            img_tag = result.find('img')
+                        
+                        if img_tag:
+                            # 複数の属性から画像URLを取得（優先順位順）
+                            thumbnail_url = (
+                                img_tag.get('src') or 
+                                img_tag.get('data-src') or 
+                                img_tag.get('data-lazy-src') or 
+                                img_tag.get('data-image-src') or
+                                img_tag.get('data-old-src')
+                            )
+                        
+                        # 方法2: 正規表現で画像URLを探す（検索結果のHTMLから）
+                        if not thumbnail_url:
+                            result_html = str(result)
+                            # Amazonの画像URLパターン（より柔軟なパターン）
+                            img_patterns = [
+                                r'https://m\.media-amazon\.com/images/I/[^"\s<>]+\._AC_SL\d+_[^"\s<>]*\.(jpg|png)',
+                                r'https://m\.media-amazon\.com/images/I/[^"\s<>]+\._AC_UL\d+_[^"\s<>]*\.(jpg|png)',
+                                r'https://m\.media-amazon\.com/images/I/[^"\s<>]+\._AC_SY\d+_[^"\s<>]*\.(jpg|png)',
+                                r'https://images-na\.ssl-images-amazon\.com/images/I/[^"\s<>]+\._AC_SL\d+_[^"\s<>]*\.(jpg|png)',
+                                r'https://images-na\.ssl-images-amazon\.com/images/I/[^"\s<>]+\._SL\d+_[^"\s<>]*\.(jpg|png)',
+                            ]
+                            for pattern in img_patterns:
+                                match = re.search(pattern, result_html)
+                                if match:
+                                    thumbnail_url = match.group(0)
+                                    break
+                        
+                        # 画像URLが見つからない場合は、商品ページから取得を試みる（フォールバック）
+                        if not thumbnail_url:
+                            thumbnail_url = self.get_thumbnail_from_url(product_url)
+                        
                         product_data.append({
                             'asin': asin,
                             'url': product_url,
                             'title': title[:200],
+                            'thumbnail_url': thumbnail_url,  # 検索結果から取得した画像URL
                             'html_element': result  # デバッグ用
                         })
                         
@@ -233,20 +279,19 @@ class AmazonThumbnailFetcher:
             
             # BeautifulSoupで取得したデータを使用
             if BS4_AVAILABLE and isinstance(matches, list) and matches and 'asin' in matches[0]:
-                # BeautifulSoupで既にタイトルを取得済み
+                # BeautifulSoupで既にタイトルと画像URLを取得済み
                 for product_info in matches:
                     asin = product_info.get('asin')
                     product_url = product_info.get('url')
                     product_title = product_info.get('title')
+                    thumbnail_url = product_info.get('thumbnail_url')  # 検索結果から取得済み
                     
                     if not asin or asin in seen_asins:
                         continue
                     
                     seen_asins.add(asin)
                     
-                    # サムネイルURLを取得
-                    thumbnail_url = self.get_thumbnail_from_url(product_url)
-                    
+                    # 画像URLが取得できた場合のみ追加
                     if thumbnail_url:
                         results.append({
                             'asin': asin,
@@ -255,6 +300,8 @@ class AmazonThumbnailFetcher:
                             'thumbnail_url': thumbnail_url
                         })
                         logger.info(f"候補追加: {product_title[:50]}... (ASIN: {asin})")
+                    else:
+                        logger.warning(f"画像URLが見つかりませんでした: {product_url}")
                     
                     # 十分な候補が集まったら終了
                     if len(results) >= max_results * 3:
