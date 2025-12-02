@@ -24,20 +24,15 @@
                 >
             </div>
             
-            <div class="input-group">
-                <label for="book-isbn">ISBN（オプション）</label>
-                <input 
-                    type="text" 
-                    id="book-isbn" 
-                    placeholder="例: 9784798161916"
-                    autocomplete="off"
-                >
+            <div class="button-group">
+                <button id="search-btn" class="search-button">
+                    <span class="btn-text">検索</span>
+                    <span class="btn-loading" style="display: none;">検索中...</span>
+                </button>
+                <button id="clear-btn" class="clear-button">
+                    <span class="btn-text">クリア</span>
+                </button>
             </div>
-            
-            <button id="search-btn" class="search-button">
-                <span class="btn-text">検索</span>
-                <span class="btn-loading" style="display: none;">検索中...</span>
-            </button>
         </div>
         
         <div id="result-section" class="result-section" style="display: none;">

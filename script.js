@@ -7,8 +7,8 @@
 const API_ENDPOINT = 'https://amazon-thumbnail-widget.onrender.com/api/get-thumbnail';
 // DOM要素
 const bookTitleInput = document.getElementById('book-title');
-const bookIsbnInput = document.getElementById('book-isbn');
 const searchBtn = document.getElementById('search-btn');
+const clearBtn = document.getElementById('clear-btn');
 const resultSection = document.getElementById('result-section');
 const thumbnailImg = document.getElementById('thumbnail-img');
 const thumbnailUrlInput = document.getElementById('thumbnail-url');
@@ -22,22 +22,19 @@ bookTitleInput.addEventListener('keypress', (e) => {
         handleSearch();
     }
 });
-bookIsbnInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-        handleSearch();
-    }
-});
+
+// クリアボタンのクリックイベント
+clearBtn.addEventListener('click', handleClear);
 
 // URLコピーボタン
 copyBtn.addEventListener('click', copyUrl);
 
 async function handleSearch() {
     const title = bookTitleInput.value.trim();
-    const isbn = bookIsbnInput.value.trim();
     
     // バリデーション
-    if (!title && !isbn) {
-        showError('タイトルまたはISBNを入力してください');
+    if (!title) {
+        showError('タイトルを入力してください');
         return;
     }
     
@@ -47,10 +44,10 @@ async function handleSearch() {
     hideResult();
     
     try {
-        console.log('検索開始:', { title, isbn });
+        console.log('検索開始:', { title });
         
         // バックエンドAPIを呼び出す（複数候補対応）
-        const candidates = await fetchThumbnail(title, isbn);
+        const candidates = await fetchThumbnail(title);
         
         console.log('検索結果:', candidates);
         
@@ -73,34 +70,36 @@ async function handleSearch() {
     }
 }
 
-async function fetchThumbnail(title, isbn) {
-    // 方法1: バックエンドAPIを使用する場合
-    // const response = await fetch(API_ENDPOINT, {
-    //     method: 'POST',
-    //     headers: {
-    //         'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify({ title, isbn })
-    // });
-    // const data = await response.json();
-    // return data.thumbnail_url;
+function handleClear() {
+    // 入力フィールドをクリア
+    bookTitleInput.value = '';
     
-    // 方法2: クライアント側で直接検索（CORSの問題がある可能性）
-    // この方法は実際には動作しない可能性が高いため、バックエンドAPIを推奨
+    // 結果を非表示
+    hideResult();
     
-    // 簡易版: タイトルからAmazon検索URLを生成（実際の画像取得はバックエンドが必要）
-    // ここでは、バックエンドAPIを呼び出す想定
+    // エラーメッセージを非表示
+    hideError();
     
-    // デモ用: 実際の実装ではバックエンドAPIを使用
-    return await fetchThumbnailFromBackend(title, isbn);
+    // 候補コンテナを削除
+    const candidatesContainer = document.getElementById('candidates-container');
+    if (candidatesContainer) {
+        candidatesContainer.remove();
+    }
+    
+    // 入力フィールドにフォーカス
+    bookTitleInput.focus();
 }
 
-async function fetchThumbnailFromBackend(title, isbn) {
+async function fetchThumbnail(title) {
+    return await fetchThumbnailFromBackend(title);
+}
+
+async function fetchThumbnailFromBackend(title) {
     // バックエンドAPIのエンドポイント（複数候補対応）
     try {
         const requestBody = { 
             title: title || null,
-            isbn: isbn || null,
+            isbn: null,
             max_results: 5  // 最大5件の候補を取得
         };
         
@@ -249,6 +248,19 @@ function selectCandidate(candidate) {
 }
 
 function hideResult() {
+    // 候補コンテナを削除
+    const candidatesContainer = document.getElementById('candidates-container');
+    if (candidatesContainer) {
+        candidatesContainer.remove();
+    }
+    
+    // サムネイルプレビューとURL表示を非表示
+    const thumbnailPreview = document.getElementById('thumbnail-preview');
+    const urlDisplay = document.querySelector('.url-display');
+    if (thumbnailPreview) thumbnailPreview.style.display = 'none';
+    if (urlDisplay) urlDisplay.style.display = 'none';
+    
+    // 結果セクションを非表示
     resultSection.style.display = 'none';
 }
 

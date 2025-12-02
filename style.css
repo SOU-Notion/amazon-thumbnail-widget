@@ -129,7 +129,7 @@ body::before {
 }
 
 .search-button {
-    width: 100%;
+    flex: 1;
     padding: 16px;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%);
     color: white;
@@ -139,7 +139,6 @@ body::before {
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    margin-top: 8px;
     position: relative;
     overflow: hidden;
 }
@@ -173,6 +172,56 @@ body::before {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+}
+
+.button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.button-group .search-button {
+    flex: 1;
+}
+
+.clear-button {
+    flex: 1;
+    padding: 16px;
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.clear-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.5s;
+}
+
+.clear-button:hover::before {
+    left: 100%;
+}
+
+.clear-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(107, 114, 128, 0.5);
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+}
+
+.clear-button:active {
+    transform: translateY(0);
 }
 
 .result-section {
