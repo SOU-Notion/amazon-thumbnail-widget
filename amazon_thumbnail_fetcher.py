@@ -28,6 +28,24 @@ class AmazonThumbnailFetcher:
     def __init__(self):
         self.amazon_base_url = "https://www.amazon.co.jp"
         self.amazon_image_base = "https://images-na.ssl-images-amazon.com/images"
+        # ブラウザのようなリクエストヘッダー（ボット検出を回避）
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'Accept-Language': 'ja-JP,ja;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Sec-Fetch-Dest': 'document',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Cache-Control': 'max-age=0'
+        }
+        # セッションを使用してクッキーを保持（より現実的なブラウザセッションをシミュレート）
+        self.session = requests.Session()
+        self.session.headers.update(self.headers)
         
     def extract_asin_from_url(self, url: str) -> Optional[str]:
         """Amazon URLからASINを抽出"""
@@ -69,18 +87,15 @@ class AmazonThumbnailFetcher:
             'ref': 'sr_pg_1'
         }
         
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        
         # リトライロジック（503エラー対策）
         max_retries = 3
-        retry_delay = 2  # 初期待機時間（秒）
+        retry_delay = 5  # 初期待機時間（秒）- ボット検出を回避するため長めに設定
         response = None
         
         for attempt in range(max_retries):
             try:
-                response = requests.get(search_url, params=params, headers=headers, timeout=30)
+                # セッションを使用してリクエスト（クッキーを保持）
+                response = self.session.get(search_url, params=params, timeout=30)
                 
                 # 503エラーの場合はリトライ
                 if response.status_code == 503:
@@ -344,10 +359,7 @@ class AmazonThumbnailFetcher:
     def _extract_title_from_product_page(self, product_url: str) -> str:
         """商品ページからタイトルを取得"""
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            page_response = requests.get(product_url, headers=headers, timeout=10)
+            page_response = self.session.get(product_url, timeout=10)
             if page_response.status_code == 200:
                 # 商品ページからタイトルを取得
                 title_patterns = [
@@ -436,11 +448,7 @@ class AmazonThumbnailFetcher:
     def get_thumbnail_from_url(self, url: str) -> Optional[str]:
         """Amazon商品URLからサムネイル画像URLを取得"""
         try:
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            
-            response = requests.get(url, headers=headers, timeout=30)
+            response = self.session.get(url, timeout=30)
             response.raise_for_status()
             
             # 画像URLのパターンを探す
