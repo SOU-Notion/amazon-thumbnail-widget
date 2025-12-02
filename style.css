@@ -36,11 +36,33 @@ body::before {
     box-shadow: 0 25px 70px rgba(5, 150, 105, 0.4), 0 10px 30px rgba(0, 0, 0, 0.2);
     max-width: 600px;
     width: 100%;
+    max-height: 90vh;
     padding: 40px;
     animation: slideUp 0.4s ease-out;
     position: relative;
     z-index: 1;
     backdrop-filter: blur(10px);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* ウィジェットコンテナのスクロールバーのスタイリング */
+#widget-container::-webkit-scrollbar {
+    width: 10px;
+}
+
+#widget-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+#widget-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 5px;
+}
+
+#widget-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
 @keyframes slideUp {
@@ -273,6 +295,29 @@ body::before {
 
 .candidates-container {
     margin-bottom: 24px;
+    max-height: 500px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 8px;
+}
+
+/* スクロールバーのスタイリング（WebKit系ブラウザ） */
+.candidates-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.candidates-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.candidates-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    border-radius: 4px;
+}
+
+.candidates-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
 }
 
 .candidates-container h3 {
