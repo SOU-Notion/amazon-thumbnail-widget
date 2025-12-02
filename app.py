@@ -80,8 +80,9 @@ def get_thumbnail():
                 return jsonify(result)
             else:
                 print(f"タイトル検索: 見つかりませんでした")
+                # 503エラーの可能性がある場合は、より詳細なメッセージを返す
                 return jsonify({
-                    'error': 'サムネイル画像が見つかりませんでした'
+                    'error': 'サムネイル画像が見つかりませんでした。Amazonサーバーが一時的に利用できない可能性があります。しばらく待ってから再試行してください。'
                 }), 404
             
     except Exception as e:

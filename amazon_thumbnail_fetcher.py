@@ -9,6 +9,7 @@ import requests
 import re
 from typing import Optional, Dict, List
 import logging
+import time
 
 try:
     from bs4 import BeautifulSoup
@@ -60,21 +61,58 @@ class AmazonThumbnailFetcher:
         # 例外が起きても必ず参照できるように、先に初期化しておく
         results: List[Dict[str, str]] = []
         
+        search_url = f"{self.amazon_base_url}/s"
+        params = {
+            'k': title,
+            'i': 'stripbooks',  # 書籍カテゴリに絞り込み
+            'rh': 'n:465392',  # 書籍カテゴリID（より確実に書籍のみ）
+            'ref': 'sr_pg_1'
+        }
+        
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        # リトライロジック（503エラー対策）
+        max_retries = 3
+        retry_delay = 2  # 初期待機時間（秒）
+        response = None
+        
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(search_url, params=params, headers=headers, timeout=30)
+                
+                # 503エラーの場合はリトライ
+                if response.status_code == 503:
+                    if attempt < max_retries - 1:
+                        wait_time = retry_delay * (2 ** attempt)  # 指数バックオフ: 2秒、4秒、8秒
+                        logger.warning(f"Amazon 503エラー (試行 {attempt + 1}/{max_retries})。{wait_time}秒後に再試行します...")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        logger.error(f"Amazon 503エラー: 最大リトライ回数に達しました")
+                        # 503エラーの場合は空の結果を返す（例外を発生させない）
+                        return results
+                
+                response.raise_for_status()
+                break  # 成功したらループを抜ける
+                
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1 and (isinstance(e, requests.exceptions.HTTPError) and e.response and e.response.status_code == 503):
+                    wait_time = retry_delay * (2 ** attempt)
+                    logger.warning(f"リクエストエラー (試行 {attempt + 1}/{max_retries}): {e}。{wait_time}秒後に再試行します...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    # 503以外のエラー、または最大リトライ回数に達した場合は例外を再発生
+                    raise
+        
+        # リトライがすべて失敗した場合、またはresponseが取得できなかった場合
+        if response is None:
+            logger.error("Amazon検索: リクエストに失敗しました")
+            return results
+        
         try:
-            search_url = f"{self.amazon_base_url}/s"
-            params = {
-                'k': title,
-                'i': 'stripbooks',  # 書籍カテゴリに絞り込み
-                'rh': 'n:465392',  # 書籍カテゴリID（より確実に書籍のみ）
-                'ref': 'sr_pg_1'
-            }
-            
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-            
-            response = requests.get(search_url, params=params, headers=headers, timeout=30)
-            response.raise_for_status()
             
             # BeautifulSoupでHTMLを解析（より確実に商品情報を取得）
             if BS4_AVAILABLE:
@@ -244,6 +282,13 @@ class AmazonThumbnailFetcher:
                 # max_results件に制限（順序は保持）
                 results = results[:max_results]
                 
+        except requests.exceptions.HTTPError as e:
+            if e.response and e.response.status_code == 503:
+                logger.error(f"Amazon検索エラー (503): サーバーが一時的に利用できません。しばらく待ってから再試行してください。")
+            else:
+                logger.error(f"Amazon検索エラー (HTTP {e.response.status_code if e.response else 'Unknown'}): {e}")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Amazon検索エラー (リクエストエラー): {e}")
         except Exception as e:
             logger.error(f"Amazon検索エラー: {e}")
         
